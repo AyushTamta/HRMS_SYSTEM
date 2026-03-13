@@ -6,18 +6,18 @@ const path = require('path');
 
 const app = express();
 
-// Middleware
-app.use(cors());
+// 1. Improved Middleware
+app.use(cors()); // Allows Netlify to talk to Render
 app.use(express.json());
 
 let db;
 
-// Database Initialization
-(async () => {
+// 2. Database Initialization with proper error handling
+async function initializeDB() {
     try {
-        // Using path.join ensures the database file is created in the correct directory on any server
+        const dbPath = path.join(__dirname, 'database.db');
         db = await open({
-            filename: path.join(__dirname, 'database.db'),
+            filename: dbPath,
             driver: sqlite3.Database
         });
 
@@ -37,11 +37,18 @@ let db;
                 FOREIGN KEY (employee_id) REFERENCES employees(employee_id) ON DELETE CASCADE
             );
         `);
-        console.log("Database initialized and connected.");
+        console.log(`Database connected at ${dbPath}`);
+        
+        // Start server only AFTER DB is ready
+        const PORT = process.env.PORT || 5000;
+        app.listen(PORT, () => console.log(`Server active on port ${PORT}`));
     } catch (error) {
         console.error("Database initialization failed:", error);
+        process.exit(1); // Stop the server if DB fails
     }
-})();
+}
+
+initializeDB();
 
 // --- API Endpoints ---
 
@@ -60,7 +67,7 @@ app.post('/api/employees', async (req, res) => {
     const { employee_id, name, email, department } = req.body;
     
     if (!employee_id || !name || !email) {
-        return res.status(400).json({ error: "Required fields are missing." });
+        return res.status(400).json({ error: "Required fields (ID, Name, Email) are missing." });
     }
 
     try {
@@ -68,9 +75,14 @@ app.post('/api/employees', async (req, res) => {
             'INSERT INTO employees (employee_id, name, email, department) VALUES (?, ?, ?, ?)',
             [employee_id, name, email, department]
         );
-        res.status(201).json({ message: "Employee registered successfully." });
+        // Ensure we return a clear object so Frontend doesn't get 'undefined'
+        res.status(201).json({ 
+            success: true,
+            message: "Employee registered successfully.",
+            data: { employee_id, name, email, department }
+        });
     } catch (err) {
-        const msg = err.message.includes("UNIQUE") ? "Employee ID already exists." : "Invalid Data.";
+        const msg = err.message.includes("UNIQUE") ? "Employee ID already exists." : "Internal Server Error.";
         res.status(400).json({ error: msg });
     }
 });
@@ -108,7 +120,3 @@ app.get('/api/attendance/:empId', async (req, res) => {
         res.status(500).json({ error: "Failed to fetch attendance records." });
     }
 });
-
-// Use Environment Port for Render/Heroku or 5000 for Local
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server active on port ${PORT}`));
