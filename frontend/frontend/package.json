@@ -10,13 +10,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.2.1",
+    "autoprefixer": "^10.x.x",
     "axios": "^1.13.6",
     "lucide-react": "^0.577.0",
+    "postcss": "^8.x.x",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-  "autoprefixer": "^10.x.x",
-  "postcss": "^8.x.x",
-  "tailwindcss": "^3.x.x"
+    "tailwindcss": "^3.x.x"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
