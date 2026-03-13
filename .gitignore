@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# Local Database
+backend/database.db
+
+# Environment Variables
+.env
+
+# Build folders
+dist/
+build/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
